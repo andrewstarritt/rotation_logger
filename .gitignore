@@ -1,0 +1,5 @@
+*.o
+*.local
+*.creator.user
+rotation_logger
+*.log
