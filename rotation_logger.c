@@ -47,7 +47,7 @@
 #include <unistd.h>
 
 #define FULL_PATH_LEN    240
-#define VERSION          "1.1.4"
+#define VERSION          "1.1.5"
 
 //------------------------------------------------------------------------------
 //
@@ -65,7 +65,7 @@ static void perrorf (const char* format, ...)
 //
 static void printUsage()
 {
-   printf ("usage: rotation_logger [--age|-a age_limit] [--size|-s size_limit] [--keep|k number] directory prefix\n");
+   printf ("usage: rotation_logger [OPTIONS] directory prefix\n");
    printf ("       rotation_logger  --help|-h\n");
    printf ("       rotation_logger  --version|-v\n");
 }
@@ -74,41 +74,45 @@ static void printUsage()
 //
 static void printHelp()
 {
-   printf ("Rotation Logger v%s. This program provides a simple rotating logger. It is similar\n"
-           "to tee, i.e. it copies standard input to standard output, and also to a log file.\n"
-           "Unlike tee, the file size and/or age is limited, and when the size or age exceeds\n"
-           "the specified threshold, a new file is created and output is directed to the new file.\n"
+   printf ("Rotation Logger v%s.\n"
+           "\n"
+           "This program provides a simple rotating logger. It is similar to tee, in that it\n"
+           "copies from standard input to standard output and also to a log file. Unlike tee,\n"
+           "the file size and/or file age is limited, and when the size or age exceeds the\n"
+           "specified thresholds, a new file is created and output is directed to that file.\n"
            "\n", VERSION);
 
    printUsage ();
 
    printf ("\n"
-           "Parameters\n"
-           "\n"
-           "directory     the location (relative of absolute) where the log files are to be created.\n"
-           "              If the specified directory does not exists, it is created.\n"
-           "              rotation_logger essentially does: mkdir -p '<directory>'  on startup.\n "
-           "\n"
-           "prefix        this specifies the file name prefix given to the log files. The suffix is\n"
-           "              always \".log\". The full file filename is <prefix>_YYYY-MM-DD_HH-MM-SS.log\n"
-           "\n"
-           "\n"
            "Options\n"
            "\n"
-           "--age,-a      age limit allowed for each file, expressed in seconds. It may be qualified\n"
-           "              with m, h, d or w for minutes, hours, days and weeks respectively.\n"
-           "              The default is 1d. The value is forced to be >= 10s.\n"
+           "--age,-a      age limit allowed for each file, expressed in seconds. It may be\n"
+           "              qualifiedwith m, h, d or w for minutes, hours, days and weeks\n"
+           "              respectively. The default is 1d. The value is forced to be >= 10s.\n"
            "\n"
-           "--size,-s     size limit allowed for each file, expressed in bytes. It may be qualified\n"
-           "              with K, M or G for kilo, mega and giga bytes respectively. The default is 50M.\n"
-           "              The value is forced to be >= 20.\n"
+           "--size,-s     size limit allowed for each file, expressed in bytes. It may be\n"
+           "              qualified with K, M or G for kilo, mega and giga bytes respectively.\n"
+           "              The default is 50M. The value is forced to be >= 20 bytes.\n"
            "\n"
            "--keep,k      number of files to keep. This is above and beyond the current file.\n"
            "              The default is 40. The value is forced to be >= 1.\n"
            "\n"
-           "--help|-h     show this help information and exit.\n"
+           "--help,-h     show this help information and exit.\n"
            "\n"
-           "--version|-v  show program version and exit.\n"
+           "--version,-v  show program version and exit.\n"
+           "\n"
+           "\n"
+           "Parameters\n"
+           "\n"
+           "directory     the location (relative or absolute) where the log files are to be\n"
+           "              created. If the specified directory does not exists, it is created.\n"
+           "              rotation_logger effectively does: mkdir -p '<directory>' on startup.\n "
+           "\n"
+           "prefix        this specifies the filename prefix given to the log files. The file\n"
+           "              suffix is always \".log\". The full file filenames are of the form:\n"
+           "\n"
+           "              <directory>/<prefix>_YYYY-MM-DD_HH-MM-SS.log\n"
            "\n");
 }
 
