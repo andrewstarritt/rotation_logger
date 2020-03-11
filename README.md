@@ -11,15 +11,6 @@ threshold, a new file is created and output is directed to the new file.
            rotation_logger  --help|-h
            rotation_logger  --version|-v
 
-### Parameters
-
-directory     the location (relative of absolute) where the log files are to be created.
-              If the specified directory does not exists, it is created.
-              rotation_logger essentially does: mkdir -p '<directory>'  on start-up.
-
-prefix        this specifies the file name prefix given to the log files. The suffix is
-              always ".log". The full file filename is <prefix>_YYYY-MM-DD_HH-MM-SS.log
-
 ### Options
 
 --age,-a      age limit allowed for each file, expressed in seconds. It may be qualified
@@ -36,3 +27,12 @@ prefix        this specifies the file name prefix given to the log files. The su
 --help|-h     show this help information and exit.
 
 --version|-v  show program version and exit.
+
+### Parameters
+
+directory     the location (relative of absolute) where the log files are to be created.
+              If the specified directory does not exists, it is created.
+              rotation_logger essentially does: mkdir -p '<directory>'  on start-up.
+
+prefix        this specifies the file name prefix given to the log files. The suffix is
+              always ".log". The full file filename is <prefix>_YYYY-MM-DD_HH-MM-SS.log

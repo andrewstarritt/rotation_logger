@@ -269,8 +269,10 @@ static int nextFile (const char* directory, const char* prefix, const int number
 //
 int main (int argc, char** argv)
 {
+   // Default option values.
+   //
    size_t sizeLimit = 50 * 1000 * 1000;   // 50M
-   int ageLimit  = 24 * 3600;             // 1 day
+   int ageLimit = 24 * 3600;              // 1 day
    int numberToKeep  = 40;                // in addition to the current file.
 
    // Process arguments
