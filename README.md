@@ -36,3 +36,14 @@ directory     the location (relative of absolute) where the log files are to be 
 
 prefix        this specifies the file name prefix given to the log files. The suffix is
               always ".log". The full file filename is <prefix>_YYYY-MM-DD_HH-MM-SS.log
+
+### Example
+
+    my_program 2>&1 | rotation_logger --age 6h --keep 28  /tmp/log_dir  mp
+
+Log standard output and standard error of my_program into files held in the 
+/tmp/log_dir directory, which is created if necessary.
+Log no more than 6 hours worth of output in each log file, and keep no more than 28 
+files (a week's worth) in total.
+Each log file name is of the form, e.g. mp_2022-05-01_16-23-02.log
+
