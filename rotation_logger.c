@@ -1,6 +1,6 @@
 /* rotation_logger.c
  * 
- * Copyright (C) 2019-2020  Andrew C. Starritt
+ * Copyright (C) 2019-2022  Andrew C. Starritt
  *
  * The rotation logger is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by the
@@ -27,11 +27,6 @@
  *
  */
 
-/* rotation_logger 
- * 
- * 
- */
-
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -47,7 +42,7 @@
 #include <unistd.h>
 
 #define FULL_PATH_LEN    240
-#define VERSION          "1.1.5"
+#define VERSION          "1.1.6"
 
 //------------------------------------------------------------------------------
 //
@@ -88,15 +83,15 @@ static void printHelp()
            "Options\n"
            "\n"
            "--age,-a      age limit allowed for each file, expressed in seconds. It may be\n"
-           "              qualifiedwith m, h, d or w for minutes, hours, days and weeks\n"
-           "              respectively. The default is 1d. The value is forced to be >= 10s.\n"
+           "              qualified with m, h, d or w for minutes, hours, days and weeks\n"
+           "              respectively. The default is 1d. The age is constrained to be >= 10s.\n"
            "\n"
            "--size,-s     size limit allowed for each file, expressed in bytes. It may be\n"
            "              qualified with K, M or G for kilo, mega and giga bytes respectively.\n"
-           "              The default is 50M. The value is forced to be >= 20 bytes.\n"
+           "              The default is 50M. The size is constrained to be >= 20 bytes.\n"
            "\n"
            "--keep,k      number of files to keep. This is above and beyond the current file.\n"
-           "              The default is 40. The value is forced to be >= 1.\n"
+           "              The default is 40. The keep value is constrained to be >= 1.\n"
            "\n"
            "--help,-h     show this help information and exit.\n"
            "\n"
