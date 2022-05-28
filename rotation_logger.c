@@ -42,10 +42,10 @@
 #include <unistd.h>
 
 #define FULL_PATH_LEN    240
-#define VERSION          "1.1.6"
+#define VERSION          "1.1.7"
 
-//------------------------------------------------------------------------------
-//
+/*------------------------------------------------------------------------------
+ */
 static void perrorf (const char* format, ...)
 {
    char message [240];
@@ -56,8 +56,8 @@ static void perrorf (const char* format, ...)
    perror (message);
 }
 
-//------------------------------------------------------------------------------
-//
+/*------------------------------------------------------------------------------
+ */
 static void printUsage()
 {
    printf ("usage: rotation_logger [OPTIONS] directory prefix\n");
@@ -65,8 +65,8 @@ static void printUsage()
    printf ("       rotation_logger  --version|-v\n");
 }
 
-//------------------------------------------------------------------------------
-//
+/*------------------------------------------------------------------------------
+ */
 static void printHelp()
 {
    printf ("Rotation Logger v%s.\n"
@@ -111,19 +111,18 @@ static void printHelp()
            "\n");
 }
 
-//------------------------------------------------------------------------------
-// Credit: Jonathan Leffler
-// http://stackoverflow.com/questions/675039/how-can-i-create-directory-tree-in-c-linux
-//
+/*------------------------------------------------------------------------------
+ * Credit: Jonathan Leffler
+ * http://stackoverflow.com/questions/675039/how-can-i-create-directory-tree-in-c-linux
+ */
 static bool make_dir (const char* dirpath, const mode_t mode)
 {
    struct stat st;
    bool status = true;
 
-
    if (stat (dirpath, &st) != 0) {
-      // Directory does not exist. Test EEXIST for race condition.
-      //
+      /* Directory does not exist. Test EEXIST for race condition.
+       */
       if ((mkdir (dirpath, mode) != 0) && (errno != EEXIST)) {
          status = false;
          perrorf ("make_dir.1 (%s, 0x%04x)", dirpath, mode);
@@ -138,24 +137,26 @@ static bool make_dir (const char* dirpath, const mode_t mode)
    return status;
 }
 
-//------------------------------------------------------------------------------
-//
+/*------------------------------------------------------------------------------
+ */
 static bool mkdir_parents (const char* dirpath, mode_t const mode)
 {
-   if (!dirpath) return false;   // sainity check
-   char* work_path = strdup (dirpath);
-   if (!work_path) return false; // sainity check
-
+   char* work_path;
    char* pp;
    char* sp;
    bool status;
-// printf ("%s\n", dirpath);
+	 
+   if (!dirpath) return false;   /* sainity check */
+   work_path = strdup (dirpath);
+   if (!work_path) return false; /* sainity check */
+
+/* printf ("%s\n", dirpath); */
    status = true;
    pp = work_path;
    while (status && (sp = strchr (pp, '/')) != 0) {
       if (sp != pp) {
-         // Neither root nor double slash in path
-         //
+         /* Neither root nor double slash in path
+          */
          *sp = '\0';
          status = make_dir (work_path, mode);
          *sp = '/';
@@ -170,11 +171,11 @@ static bool mkdir_parents (const char* dirpath, mode_t const mode)
    return status;
 }
 
-//------------------------------------------------------------------------------
-// Filter directory entries looking for log files.
-// We check prefix, suffix and length, we do not check the date part (yet).
-//
-static char thePrefix [FULL_PATH_LEN];   // includes prefix and date '_' separator.
+/*------------------------------------------------------------------------------
+ * Filter directory entries looking for log files.
+ * We check prefix, suffix and length, we do not check the date part (yet).
+ */
+static char thePrefix [FULL_PATH_LEN];   /* includes prefix and date '_' separator. */
 static int prefixFilter (const struct dirent* entry)
 {
    int result = 0;
@@ -184,8 +185,8 @@ static int prefixFilter (const struct dirent* entry)
       size_t dl;
       pl = strlen (thePrefix);
       dl  = strlen (entry->d_name);
-///   printf ("%s  %ld  %ld\n", entry->d_name, dl, pl + 23);
-      if (dl == pl + 23) {   // 23 <= "<date>.log"
+/**   printf ("%s  %ld  %ld\n", entry->d_name, dl, pl + 23);  **/
+      if (dl == pl + 23) {   /* 23 <= "<date>.log" */
          bool prefixOkay;
          bool suffixOkay;
          prefixOkay = strncmp (entry->d_name, thePrefix, pl) == 0;
@@ -197,16 +198,16 @@ static int prefixFilter (const struct dirent* entry)
    return result;
 }
 
-//------------------------------------------------------------------------------
-//
+/*------------------------------------------------------------------------------
+ */
 static void purgeOldFiles (const char* directory, const char* prefix, const int numberToKeep)
 {
    struct dirent** namelist;
    int n;
    int j;
 
-   // Set up static prefix - imcluding the under score.
-   //
+   /* Set up static prefix - imcluding the under score.
+    */
    snprintf (thePrefix, sizeof (thePrefix), "%s_", prefix);
 
    n = scandir (directory, &namelist, prefixFilter, alphasort);
@@ -222,7 +223,7 @@ static void purgeOldFiles (const char* directory, const char* prefix, const int 
          int status;
 
          snprintf (fullPath, sizeof (fullPath), "%s/%s", directory, namelist[j]->d_name);
-///      printf ("unlinking: %s\n", fullPath);
+/**      printf ("unlinking: %s\n", fullPath);  **/
          status = unlink (fullPath);
          if (status < 0) {
             perrorf("unlink (%s)", fullPath);
@@ -233,51 +234,58 @@ static void purgeOldFiles (const char* directory, const char* prefix, const int 
    free (namelist);
 }
 
-//------------------------------------------------------------------------------
-//
+/*------------------------------------------------------------------------------
+ */
 static int nextFile (const char* directory, const char* prefix, const int numberToKeep)
 {
    time_t timeNow;
    char timeImage [24];
    char filename [FULL_PATH_LEN];
+   int fd;
 
-   // First unlink (delete) all but latest numberToKeep log files.
-   //
+   /* First unlink (delete) all but latest numberToKeep log files.
+    */
    purgeOldFiles (directory, prefix, numberToKeep);
 
    time (&timeNow);
    strftime (timeImage, sizeof (timeImage), "%Y-%m-%d_%H-%M-%S", localtime (&timeNow));
    snprintf (filename,  sizeof (filename),  "%s/%s_%s.log", directory, prefix, timeImage);
 
-   int fd = creat (filename, 0644);
-
+   fd = creat (filename, 0644);
    if (fd < 0) {
       perrorf ("creat(%s,0644)", filename);
    } else {
-///   printf ("new log file: %s\n", filename);
+/**   printf ("new log file: %s\n", filename); **/
    }
 
    return fd;
 }
 
-//------------------------------------------------------------------------------
-//
+/*------------------------------------------------------------------------------
+ */
 int main (int argc, char** argv)
 {
-   // Default option values.
-   //
-   size_t sizeLimit = 50 * 1000 * 1000;   // 50M
-   int ageLimit = 24 * 3600;              // 1 day
-   int numberToKeep  = 40;                // in addition to the current file.
+   /* Default option values.
+    */
+   long sizeLimit = 50 * 1000 * 1000;   /* 50M */
+   int ageLimit = 24 * 3600;              /* 1 day */
+   int numberToKeep  = 40;                /* in addition to the current file. */
+   int numberArgs;
+   char* directory = NULL;
+   char* prefix    = NULL;
+   bool okay;
+   int fd;
+   time_t lastTime;
+   size_t total;
+   char last_char;
+   ssize_t numberRead;
 
-   // Process arguments
-   //
+   /* Process arguments
+    */
    while (true) {
-      int option_index = 0;
-      size_t value = 0;
 
-      // All long options also have a short option
-      //
+      /* All long options also have a short option
+       */
       static const struct option long_options[] = {
          {"help", no_argument, NULL, 'h'},
          {"version", no_argument, NULL, 'v'},
@@ -287,15 +295,18 @@ int main (int argc, char** argv)
          {NULL, 0, NULL, 0}
       };
 
+      int option_index = 0;
+      long value = 0;
       const int c = getopt_long (argc, argv, "hva:s:k:", long_options, &option_index);
+      
       if (c == -1)
          break;
 
       switch (c) {
 
          case 0:
-            // All long options also have a short option
-            //
+            /* All long options also have a short option
+             */
             printf ("unexpected option %s", long_options[option_index].name);
             if (optarg)
                printf (" with arg %s", optarg);
@@ -324,7 +335,7 @@ int main (int argc, char** argv)
                }
                if (n == 2) {
                   if (xx == ' ') {
-                  // do nothing
+                  /* do nothing */
                   } else if (xx == 'm') {
                      value *= 60;
                   } else if (xx == 'h') {
@@ -353,7 +364,7 @@ int main (int argc, char** argv)
                }
                if (n == 2) {
                   if (xx == ' ') {
-                     // do nothing
+                     /* do nothing */
                   } else if (xx == 'K') {
                      value *= 1000;
                   } else if (xx == 'M') {
@@ -375,8 +386,8 @@ int main (int argc, char** argv)
             break;
 
          case '?':
-            // invalid option
-            //
+            /* invalid option
+             */
             printUsage();
             return 1;
             break;
@@ -387,9 +398,9 @@ int main (int argc, char** argv)
       }
    }
 
-   // Santise options: 10 second minimum, 20 bytes minimum, 
-   // number file minimum is 2 (1 + current)
-   //
+   /* Santise options: 10 second minimum, 20 bytes minimum, 
+    * number file minimum is 2 (1 + current)
+    */
    if (ageLimit < 10) {
       ageLimit = 10;
    }
@@ -400,55 +411,55 @@ int main (int argc, char** argv)
       numberToKeep = 1;
    }
 
-   int numberArgs = argc - optind;
+   numberArgs = argc - optind;
    if (numberArgs < 2) {
       printf ("missing arguments\n");
       printUsage();
       return 1;
    }
 
-   const char* directory = argv[optind++];
-   const char* prefix    = argv[optind++];
+   directory = argv[optind++];
+   prefix    = argv[optind++];
 
    printf ("Rotation Logger %s/%s\n", directory, prefix);
    printf ("age limit:  %d secs\n", ageLimit);
    printf ("size limit: %ld bytes\n", sizeLimit);
    printf ("keep:       %d\n", numberToKeep);
 
-   bool okay = mkdir_parents (directory, 0755);
+   okay = mkdir_parents (directory, 0755);
    if (!okay) {
       perrorf ("mkdir (%s,0755)", directory);
       return 2;
    }
 
-   int fd;
    fd = nextFile (directory, prefix, numberToKeep);
    if (fd < 0) {
       return 2;
    }
-
-   time_t lastTime;
+    
    time (&lastTime);
-
-   size_t total = 0;
-   char last_char = '\n';
-   ssize_t numberRead;
+   total = 0;
+   last_char = '\n';
 
    while (true) {
       char buffer [2000];
+      int m1;
+      int m2;
+      time_t thisTime;
+      time_t age;
 
-      // cribbed from tee
-      //
+      /* cribbed from tee
+       */
       numberRead = read (STDIN_FILENO, buffer, sizeof (buffer));
       if (numberRead < 0 && errno == EINTR)
          continue;
       if (numberRead <= 0)
-         break; // end of input
+         break; /* end of input */
 
-      // First copy to standared output and write to current file.
-      //
-      int m1 = write (STDOUT_FILENO, buffer, numberRead);
-      int m2 = write (fd, buffer, numberRead);
+      /* First copy to standared output and write to current file.
+       */
+      m1 = write (STDOUT_FILENO, buffer, numberRead);
+      m2 = write (fd, buffer, numberRead);
       total += m2;
 
       if (m1 != m2) {
@@ -462,17 +473,15 @@ int main (int argc, char** argv)
          last_char = buffer [numberRead - 1];
       }
 
-      // Is a new file required? This is based on size and/or age of file,
-      // To avoid name clash, the minimum allowed age is 1 second,
-      //
-      time_t thisTime;
+      /* Is a new file required? This is based on size and/or age of file,
+       * To avoid name clash, the minimum allowed age is 1 second,
+       */
       time (&thisTime);
-
-      const time_t age = thisTime - lastTime;
+      age = thisTime - lastTime;
 
       if ((age >= ageLimit) || ((total >= sizeLimit) && (age >= 1))) {
-         // Ensure each file has a newline at the end.
-         //
+         /* Ensure each file has a newline at the end.
+          */
          if (last_char != '\n') {
             static const char newline [2] = "\n";
             write (fd, newline, 1);
@@ -489,7 +498,7 @@ int main (int argc, char** argv)
    }
 
    close (fd);
-///   printf ("Rotation Logger complete\n");
+/**   printf ("Rotation Logger complete\n");  **/
    return 0;
 }
 
