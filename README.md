@@ -15,16 +15,18 @@ threshold, a new file is created and output is directed to the new file.
 
 --age,-a      age limit allowed for each file, expressed in seconds. It may be qualified
               with m, h, d or w for minutes, hours, days and weeks respectively.
-              The default is 1d. The value is forced to be >= 10s.
+              The default is 1d. The value is constrained to be >= 10s.
 
 --size,-s     size limit allowed for each file, expressed in bytes. It may be qualified
               with K, M or G for kilo, mega and giga bytes respectively. The default is 50M.
-              The value is forced to be >= 20.
+              The value is constrained to be >= 20.
 
 --keep,k      number of files to keep. This is above and beyond the current file.
-              The default is 40. The value is forced to be >= 1.
+              The default is 40. The value is constrained to be >= 1.
 
 --help|-h     show this help information and exit.
+
+--warranty,-w show warranty information and exit.
 
 --version|-v  show program version and exit.
 

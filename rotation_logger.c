@@ -1,6 +1,7 @@
 /* rotation_logger.c
  * 
  * Copyright (C) 2019-2022  Andrew C. Starritt
+ * All rights reserved.
  *
  * The rotation logger is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by the
@@ -42,7 +43,7 @@
 #include <unistd.h>
 
 #define FULL_PATH_LEN    240
-#define VERSION          "1.1.7"
+#define VERSION          "1.1.8"
 
 /*------------------------------------------------------------------------------
  */
@@ -58,18 +59,49 @@ static void perrorf (const char* format, ...)
 
 /*------------------------------------------------------------------------------
  */
+static void printWarranty()
+{
+   printf ("[31;1mrotation_logger[00m is distributed under the "
+           "GNU General Public License version 3.\n"
+           "\n"
+           "Disclaimer of Warranty and Limitation of Liability.\n"
+           "\n"
+           "  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY\n"
+           "APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"
+           "HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM [38;1m\"AS IS\"[00m WITHOUT WARRANTY\n"
+           "OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,\n"
+           "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n"
+           "PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM\n"
+           "IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF\n"
+           "ALL NECESSARY SERVICING, REPAIR OR CORRECTION.\n"
+           "\n"
+           "  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING\n"
+           "WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS\n"
+           "THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY\n"
+           "GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE\n"
+           "USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF\n"
+           "DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD\n"
+           "PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),\n"
+           "EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF\n"
+           "SUCH DAMAGES.\n"
+           "\n");
+}
+
+/*------------------------------------------------------------------------------
+ */
 static void printUsage()
 {
    printf ("usage: rotation_logger [OPTIONS] directory prefix\n");
    printf ("       rotation_logger  --help|-h\n");
    printf ("       rotation_logger  --version|-v\n");
+   printf ("       rotation_logger  --warranty|-w\n");
 }
 
 /*------------------------------------------------------------------------------
  */
 static void printHelp()
 {
-   printf ("Rotation Logger v%s.\n"
+   printf ("Rotation Logger v%s\n"
            "\n"
            "This program provides a simple rotating logger. It is similar to tee, in that it\n"
            "copies from standard input to standard output and also to a log file. Unlike tee,\n"
@@ -94,6 +126,8 @@ static void printHelp()
            "              The default is 40. The keep value is constrained to be >= 1.\n"
            "\n"
            "--help,-h     show this help information and exit.\n"
+           "\n"
+           "--warranty,-w show warranty information and exit.\n"
            "\n"
            "--version,-v  show program version and exit.\n"
            "\n"
@@ -268,8 +302,8 @@ int main (int argc, char** argv)
    /* Default option values.
     */
    long sizeLimit = 50 * 1000 * 1000;   /* 50M */
-   int ageLimit = 24 * 3600;              /* 1 day */
-   int numberToKeep  = 40;                /* in addition to the current file. */
+   int ageLimit = 24 * 3600;            /* 1 day */
+   int numberToKeep  = 40;              /* in addition to the current file. */
    int numberArgs;
    char* directory = NULL;
    char* prefix    = NULL;
@@ -289,6 +323,7 @@ int main (int argc, char** argv)
       static const struct option long_options[] = {
          {"help", no_argument, NULL, 'h'},
          {"version", no_argument, NULL, 'v'},
+         {"warranty", no_argument, NULL, 'w'},
          {"age", required_argument, NULL, 'a'},
          {"size", required_argument, NULL, 's'},
          {"keep", required_argument, NULL, 'k'},
@@ -297,7 +332,7 @@ int main (int argc, char** argv)
 
       int option_index = 0;
       long value = 0;
-      const int c = getopt_long (argc, argv, "hva:s:k:", long_options, &option_index);
+      const int c = getopt_long (argc, argv, "hvwa:s:k:", long_options, &option_index);
       
       if (c == -1)
          break;
@@ -322,6 +357,11 @@ int main (int argc, char** argv)
 
          case 'v':
             printf ("rotation_logger version %s\n", VERSION);
+            return 0;
+            break;
+
+         case 'w':
+            printWarranty();
             return 0;
             break;
 
@@ -398,6 +438,9 @@ int main (int argc, char** argv)
       }
    }
 
+   fprintf (stderr, "This program comes with ABSOLUTELY NO WARRANTY, "
+            "for details run 'rotation_logger --warranty'.\n");
+
    /* Santise options: 10 second minimum, 20 bytes minimum, 
     * number file minimum is 2 (1 + current)
     */
@@ -421,10 +464,12 @@ int main (int argc, char** argv)
    directory = argv[optind++];
    prefix    = argv[optind++];
 
-   printf ("Rotation Logger %s/%s\n", directory, prefix);
-   printf ("age limit:  %d secs\n", ageLimit);
-   printf ("size limit: %ld bytes\n", sizeLimit);
-   printf ("keep:       %d\n", numberToKeep);
+   /* User messages need to be sent to stderr.
+    */
+   fprintf (stderr, "Rotation Logger %s/%s\n", directory, prefix);
+   fprintf (stderr, "age limit:  %d secs\n", ageLimit);
+   fprintf (stderr, "size limit: %ld bytes\n", sizeLimit);
+   fprintf (stderr, "keep:       %d\n", numberToKeep);
 
    okay = mkdir_parents (directory, 0755);
    if (!okay) {
