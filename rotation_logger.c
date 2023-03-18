@@ -1,6 +1,6 @@
 /* rotation_logger.c
  * 
- * Copyright (C) 2019-2022  Andrew C. Starritt
+ * Copyright (C) 2019-2023  Andrew C. Starritt
  * All rights reserved.
  *
  * The rotation logger is free software: you can redistribute it and/or modify
@@ -43,7 +43,7 @@
 #include <unistd.h>
 
 #define FULL_PATH_LEN    240
-#define VERSION          "1.1.8"
+#define VERSION          "1.1.9"
 
 /*------------------------------------------------------------------------------
  */
@@ -124,6 +124,8 @@ static void printHelp()
            "\n"
            "--keep,k      number of files to keep. This is above and beyond the current file.\n"
            "              The default is 40. The keep value is constrained to be >= 1.\n"
+           "\n"
+           "--quiet,-q    quiet mode, no output standard output, output is just to the log files.\n"
            "\n"
            "--help,-h     show this help information and exit.\n"
            "\n"
@@ -304,6 +306,8 @@ int main (int argc, char** argv)
    long sizeLimit = 50 * 1000 * 1000;   /* 50M */
    int ageLimit = 24 * 3600;            /* 1 day */
    int numberToKeep  = 40;              /* in addition to the current file. */
+   bool quietMode = false;
+
    int numberArgs;
    char* directory = NULL;
    char* prefix    = NULL;
@@ -324,6 +328,7 @@ int main (int argc, char** argv)
          {"help", no_argument, NULL, 'h'},
          {"version", no_argument, NULL, 'v'},
          {"warranty", no_argument, NULL, 'w'},
+         {"quiet", no_argument, NULL, 'q'},
          {"age", required_argument, NULL, 'a'},
          {"size", required_argument, NULL, 's'},
          {"keep", required_argument, NULL, 'k'},
@@ -332,7 +337,7 @@ int main (int argc, char** argv)
 
       int option_index = 0;
       long value = 0;
-      const int c = getopt_long (argc, argv, "hvwa:s:k:", long_options, &option_index);
+      const int c = getopt_long (argc, argv, "hvwqa:s:k:", long_options, &option_index);
       
       if (c == -1)
          break;
@@ -425,6 +430,10 @@ int main (int argc, char** argv)
             numberToKeep = atoi (optarg);
             break;
 
+         case 'q':
+            quietMode = true;
+            break;
+
          case '?':
             /* invalid option
              */
@@ -464,7 +473,7 @@ int main (int argc, char** argv)
    directory = argv[optind++];
    prefix    = argv[optind++];
 
-   /* User messages need to be sent to stderr.
+   /* User messages ned to be sent to stderr.
     */
    fprintf (stderr, "Rotation Logger %s/%s\n", directory, prefix);
    fprintf (stderr, "age limit:  %d secs\n", ageLimit);
@@ -501,13 +510,17 @@ int main (int argc, char** argv)
       if (numberRead <= 0)
          break; /* end of input */
 
-      /* First copy to standared output and write to current file.
+      /* First copy to standared output (non quiet mode) and write to current file.
        */
-      m1 = write (STDOUT_FILENO, buffer, numberRead);
+      if (!quietMode)
+         m1 = write (STDOUT_FILENO, buffer, numberRead);
+      else
+         m1 = 0;   /* Ensure it has a value */
+
       m2 = write (fd, buffer, numberRead);
       total += m2;
 
-      if (m1 != m2) {
+      if (!quietMode && (m1 != m2)) {
          char message [120];
          int n = snprintf (message, sizeof (message),
                            "*** write mis-match %d/%d\n", m1, m2);

@@ -24,11 +24,13 @@ threshold, a new file is created and output is directed to the new file.
 --keep,k      number of files to keep. This is above and beyond the current file.
               The default is 40. The value is constrained to be >= 1.
 
---help|-h     show this help information and exit.
+--quiet,-q    quiet mode, no output standard output, output is just to the log files.
+
+--help,-h     show this help information and exit.
 
 --warranty,-w show warranty information and exit.
 
---version|-v  show program version and exit.
+--version,-v  show program version and exit.
 
 ### Parameters
 
