@@ -42,8 +42,11 @@
 #include <time.h>
 #include <unistd.h>
 
-#define FULL_PATH_LEN    240
+#define FULL_PATH_LEN    260
 #define VERSION          "1.1.9"
+
+static const char* programName = "\033[31;1mrotation_logger\033[00m";
+static const char* as_is = "\033[38;1m\"AS IS\"\033[00m";
 
 /*------------------------------------------------------------------------------
  */
@@ -61,14 +64,13 @@ static void perrorf (const char* format, ...)
  */
 static void printWarranty()
 {
-   printf ("[31;1mrotation_logger[00m is distributed under the "
-           "GNU General Public License version 3.\n"
+   printf ("%s is distributed under the GNU General Public License version 3.\n"
            "\n"
            "Disclaimer of Warranty and Limitation of Liability.\n"
            "\n"
            "  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY\n"
            "APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"
-           "HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM [38;1m\"AS IS\"[00m WITHOUT WARRANTY\n"
+           "HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM %s WITHOUT WARRANTY\n"
            "OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,\n"
            "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR\n"
            "PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM\n"
@@ -84,67 +86,74 @@ static void printWarranty()
            "PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),\n"
            "EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF\n"
            "SUCH DAMAGES.\n"
-           "\n");
+           "\n", programName, as_is);
 }
 
 /*------------------------------------------------------------------------------
  */
 static void printUsage()
 {
-   printf ("usage: rotation_logger [OPTIONS] directory prefix\n");
-   printf ("       rotation_logger  --help|-h\n");
-   printf ("       rotation_logger  --version|-v\n");
-   printf ("       rotation_logger  --warranty|-w\n");
+   printf ("usage: %s [OPTIONS] directory prefix\n", programName);
+   printf ("       %s --help|-h\n", programName);
+   printf ("       %s --version|-v\n", programName);
+   printf ("       %s --warranty|-w\n", programName);
+}
+
+/*------------------------------------------------------------------------------
+ */
+static void printVersion ()
+{
+   printf ("%s version %s\n", programName, VERSION);
 }
 
 /*------------------------------------------------------------------------------
  */
 static void printHelp()
 {
-   printf ("Rotation Logger v%s\n"
-           "\n"
+   printVersion();
+   printf ("\n"
            "This program provides a simple rotating logger. It is similar to tee, in that it\n"
            "copies from standard input to standard output and also to a log file. Unlike tee,\n"
-           "the file size and/or file age is limited, and when the size or age exceeds the\n"
+           "the file size and the file age are limited, and when the size or age exceeds the\n"
            "specified thresholds, a new file is created and output is directed to that file.\n"
-           "\n", VERSION);
+           "\n");
 
    printUsage ();
 
    printf ("\n"
            "Options\n"
            "\n"
-           "--age,-a      age limit allowed for each file, expressed in seconds. It may be\n"
-           "              qualified with m, h, d or w for minutes, hours, days and weeks\n"
-           "              respectively. The default is 1d. The age is constrained to be >= 10s.\n"
+           "--age, -a      age limit allowed for each file, expressed in seconds. It may be\n"
+           "               qualified with m, h, d or w for minutes, hours, days and weeks\n"
+           "               respectively. The default is 1d. The age is constrained to be >= 10s.\n"
            "\n"
-           "--size,-s     size limit allowed for each file, expressed in bytes. It may be\n"
-           "              qualified with K, M or G for kilo, mega and giga bytes respectively.\n"
-           "              The default is 50M. The size is constrained to be >= 20 bytes.\n"
+           "--size, -s     size limit allowed for each file, expressed in bytes. It may be\n"
+           "               qualified with K, M or G for kilo, mega and giga bytes respectively.\n"
+           "               The default is 50M. The size is constrained to be >= 20 bytes.\n"
            "\n"
-           "--keep,k      number of files to keep. This is above and beyond the current file.\n"
-           "              The default is 40. The keep value is constrained to be >= 1.\n"
+           "--keep, -k     number of files to keep. This is above and beyond the current file.\n"
+           "               The default is 40. The keep value is constrained to be >= 1.\n"
            "\n"
-           "--quiet,-q    quiet mode, no output standard output, output is just to the log files.\n"
+           "--quiet, -q    quiet mode, no output standard output, output is just to the log files.\n"
            "\n"
-           "--help,-h     show this help information and exit.\n"
+           "--help, -h     show this help information and exit.\n"
            "\n"
-           "--warranty,-w show warranty information and exit.\n"
+           "--warranty, -w show warranty information and exit.\n"
            "\n"
-           "--version,-v  show program version and exit.\n"
+           "--version, -v  show program version and exit.\n"
            "\n"
            "\n"
            "Parameters\n"
            "\n"
-           "directory     the location (relative or absolute) where the log files are to be\n"
-           "              created. If the specified directory does not exists, it is created.\n"
-           "              rotation_logger effectively does: mkdir -p '<directory>' on startup.\n "
+           "directory      the location (relative or absolute) where the log files are to be\n"
+           "               created. If the specified directory does not exists, it is created.\n"
+           "               %s effectively does: mkdir -p '<directory>' on startup.\n "
            "\n"
-           "prefix        this specifies the filename prefix given to the log files. The file\n"
-           "              suffix is always \".log\". The full file filenames are of the form:\n"
+           "prefix         this specifies the filename prefix given to the log files. The file\n"
+           "               suffix is always \".log\". The full file filenames are of the form:\n"
            "\n"
-           "              <directory>/<prefix>_YYYY-MM-DD_HH-MM-SS.log\n"
-           "\n");
+           "               <directory>/<prefix>_YYYY-MM-DD_HH-MM-SS.log\n"
+           "\n", programName);
 }
 
 /*------------------------------------------------------------------------------
@@ -212,6 +221,7 @@ static bool mkdir_parents (const char* dirpath, mode_t const mode)
  * We check prefix, suffix and length, we do not check the date part (yet).
  */
 static char thePrefix [FULL_PATH_LEN];   /* includes prefix and date '_' separator. */
+
 static int prefixFilter (const struct dirent* entry)
 {
    int result = 0;
@@ -304,7 +314,7 @@ int main (int argc, char** argv)
    /* Default option values.
     */
    long sizeLimit = 50 * 1000 * 1000;   /* 50M */
-   int ageLimit = 24 * 3600;            /* 1 day */
+   long ageLimit = 24 * 3600;           /* 1 day */
    int numberToKeep  = 40;              /* in addition to the current file. */
    bool quietMode = false;
 
@@ -361,7 +371,7 @@ int main (int argc, char** argv)
             break;
 
          case 'v':
-            printf ("rotation_logger version %s\n", VERSION);
+            printVersion();
             return 0;
             break;
 
@@ -448,9 +458,9 @@ int main (int argc, char** argv)
    }
 
    fprintf (stderr, "This program comes with ABSOLUTELY NO WARRANTY, "
-            "for details run 'rotation_logger --warranty'.\n");
+                    "for details run '%s --warranty'.\n", programName);
 
-   /* Santise options: 10 second minimum, 20 bytes minimum, 
+   /* Sanitise options: 10 second minimum, 20 bytes minimum,
     * number file minimum is 2 (1 + current)
     */
    if (ageLimit < 10) {
@@ -473,11 +483,11 @@ int main (int argc, char** argv)
    directory = argv[optind++];
    prefix    = argv[optind++];
 
-   /* User messages ned to be sent to stderr.
+   /* User messages need to be sent to stderr.
     */
    fprintf (stderr, "Rotation Logger %s/%s\n", directory, prefix);
-   fprintf (stderr, "age limit:  %d secs\n", ageLimit);
-   fprintf (stderr, "size limit: %ld bytes\n", sizeLimit);
+   fprintf (stderr, "age limit:  %ld secs (%.1f days)\n", ageLimit, ageLimit/86400.0);
+   fprintf (stderr, "size limit: %ld bytes (%.1f MB)\n", sizeLimit, sizeLimit/1000000.0);
    fprintf (stderr, "keep:       %d\n", numberToKeep);
 
    okay = mkdir_parents (directory, 0755);
